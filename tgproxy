@@ -1,18 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-resolve_script_path() {
-  local source="${BASH_SOURCE[0]}"
-  while [[ -L "${source}" ]]; do
-    local dir
-    dir="$(cd -P "$(dirname "${source}")" && pwd)"
-    source="$(readlink "${source}")"
-    [[ "${source}" != /* ]] && source="${dir}/${source}"
-  done
-  cd -P "$(dirname "${source}")" && pwd
-}
-
-DIR="$(resolve_script_path)"
+# Hardcode the known installation directory to avoid symlink/path resolution issues
+DIR="/opt/tgproxy"
 
 source "$DIR/src/common.sh"
 source "$DIR/src/setup.sh"
