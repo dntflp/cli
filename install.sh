@@ -8,7 +8,7 @@ set -e
 
 REPO="dntflp/cli"
 BRANCH="main"
-RAW_URL="https://raw.githubusercontent.com/$REPO/$BRANCH"
+RAW_URL="https://raw.githubusercontent.com/$REPO/refs/heads/$BRANCH"
 
 APP_NAME="tgproxy"
 INSTALL_PATH="/opt/tgproxy"
@@ -40,12 +40,24 @@ mkdir -p "$LOG_PATH"
 
 # Download files
 print_info "Downloading tgproxy components..."
-curl -fsSL "$RAW_URL/tgproxy" -o "$INSTALL_PATH/tgproxy"
+
+download_file() {
+  local file="$1"
+  local target="$2"
+  local url="$RAW_URL/$file"
+
+  if ! curl -fsSL -o "$target" "$url"; then
+    print_err "Failed to download $file from $url"
+    exit 1
+  fi
+}
+
+download_file "tgproxy" "$INSTALL_PATH/tgproxy"
 chmod +x "$INSTALL_PATH/tgproxy"
 
-curl -fsSL "$RAW_URL/src/common.sh" -o "$INSTALL_PATH/src/common.sh"
-curl -fsSL "$RAW_URL/src/setup.sh" -o "$INSTALL_PATH/src/setup.sh"
-curl -fsSL "$RAW_URL/src/actions.sh" -o "$INSTALL_PATH/src/actions.sh"
+download_file "src/common.sh" "$INSTALL_PATH/src/common.sh"
+download_file "src/setup.sh" "$INSTALL_PATH/src/setup.sh"
+download_file "src/actions.sh" "$INSTALL_PATH/src/actions.sh"
 
 # Default config creation
 CFG_FILE="$CONFIG_PATH/config.env"
@@ -60,7 +72,6 @@ fi
 
 # Symlink
 ln -sf "$INSTALL_PATH/tgproxy" "$LINK_PATH"
-
 print_ok "tgproxy CLI installed successfully."
 echo
 echo "Usage:"
