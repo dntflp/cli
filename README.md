@@ -15,7 +15,7 @@
 Установите `tgproxy` CLI на свой сервер всего одной командой:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dntflpef/cli/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/dntflp/cli/main/install.sh | sudo bash
 ```
 
 *Скрипт загрузит необходимые файлы, создаст директорию `/opt/tgproxy` и подготовит базовый конфигурационный файл.*
@@ -48,7 +48,7 @@ sudo tgproxy install
 
 ```bash
 # 1. Устанавливаем CLI
-curl -fsSL https://raw.githubusercontent.com/dntflpef/cli/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/dntflp/cli/main/install.sh | sudo bash
 
 # 2. Поднимаем прокси
 sudo tgproxy install

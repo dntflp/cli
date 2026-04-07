@@ -6,7 +6,7 @@ set -e
 # Automates the setup of MTProto Proxy via tgproxy CLI
 # ==============================================================================
 
-REPO="dntflpef/cli"
+REPO="dntflp/cli"
 BRANCH="main"
 RAW_URL="https://raw.githubusercontent.com/$REPO/$BRANCH"
 
