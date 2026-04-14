@@ -12,7 +12,6 @@ BIN_DIR="$INSTALL_DIR/bin"
 MTG_BIN="$BIN_DIR/mtg"
 SERVICE_NAME="tgproxy.service"
 
-# Helper functions
 print_info() {
   echo -e "\033[0;34m[INFO]\033[0m $1"
 }

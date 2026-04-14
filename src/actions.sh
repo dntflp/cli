@@ -48,11 +48,9 @@ action_restart() {
   load_env
 
   if [[ "${TGPROXY_MODE:-systemd}" == "docker" ]]; then
-    # In Docker, we need to remove and recreate the container to apply port changes
     if type setup_docker_container &>/dev/null; then
        setup_docker_container
     else
-       # Fallback if function is somehow missing in context
        if docker ps -a --format '{{.Names}}' | grep -q "^tgproxy$"; then
          docker rm -f tgproxy >/dev/null
        fi
