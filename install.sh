@@ -75,6 +75,7 @@ ln -sf "$INSTALL_PATH/tgproxy" "$LINK_PATH"
 print_ok "tgproxy CLI installed successfully."
 echo
 echo "Usage:"
-echo "  1) Run 'tgproxy install' to configure the MTProto Proxy."
-echo "  2) Run 'tgproxy link' to get your Telegram connection link."
+echo "  1) Run 'tgproxy install' to configure MTProto Proxy via Systemd."
+echo "  2) Run 'tgproxy install-docker' to configure MTProto Proxy via Docker."
+echo "  3) Run 'tgproxy link' to get your Telegram connection link."
 echo
