@@ -10,7 +10,7 @@ TGProxy CLI Commands:
   tgproxy install          - Setup proxy via systemd (default)
   tgproxy install-docker   - Setup proxy via Docker (installs Docker if needed)
   tgproxy link             - Show the tg:// connection link for your proxy
-  tgproxy restart          - Restart the MTProto service (systemd or Docker)
+  tgproxy restart          - Restart the MTProto service (applies new config)
   tgproxy status           - Check the service status and configuration
   tgproxy help             - Display this help message
 EOF
@@ -48,14 +48,25 @@ action_restart() {
   load_env
 
   if [[ "${TGPROXY_MODE:-systemd}" == "docker" ]]; then
-    if docker ps -a --format '{{.Names}}' | grep -q "^tgproxy$"; then
-      docker restart tgproxy
-      print_ok "Docker container 'tgproxy' restarted successfully."
+    # In Docker, we need to remove and recreate the container to apply port changes
+    if type setup_docker_container &>/dev/null; then
+       setup_docker_container
     else
-      print_err "Docker container 'tgproxy' not found."
+       # Fallback if function is somehow missing in context
+       if docker ps -a --format '{{.Names}}' | grep -q "^tgproxy$"; then
+         docker rm -f tgproxy >/dev/null
+       fi
+       docker run -d \
+         --name tgproxy \
+         --restart unless-stopped \
+         -p "${TGPROXY_PORT:-443}:${TGPROXY_PORT:-443}" \
+         ghcr.io/9seconds/mtg:latest \
+         simple-run 0.0.0.0:${TGPROXY_PORT:-443} ${TGPROXY_SECRET} >/dev/null
+       print_ok "Docker container 'tgproxy' recreated and restarted successfully."
     fi
   else
     if systemctl is-active --quiet "$SERVICE_NAME"; then
+      setup_systemd
       systemctl restart "$SERVICE_NAME"
       print_ok "Service $SERVICE_NAME restarted successfully."
     else
