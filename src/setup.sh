@@ -51,10 +51,20 @@ configure_secret() {
   if [[ -z "${TGPROXY_SECRET:-}" ]]; then
     print_info "Generating secure MTProto secret for domain: ${TGPROXY_DOMAIN:-google.com}"
     local new_secret
-    new_secret=$("$MTG_BIN" generate-secret --hex "${TGPROXY_DOMAIN:-google.com}")
+
+    if [[ "$1" == "docker" ]]; then
+       # Use docker to generate secret
+       new_secret=$(docker run --rm ghcr.io/9seconds/mtg:latest generate-secret --hex "${TGPROXY_DOMAIN:-google.com}")
+    else
+       new_secret=$("$MTG_BIN" generate-secret --hex "${TGPROXY_DOMAIN:-google.com}")
+    fi
 
     # Save the new secret directly to the config file
-    echo "TGPROXY_SECRET=$new_secret" >> "$CONFIG_FILE"
+    if grep -q "TGPROXY_SECRET=" "$CONFIG_FILE" 2>/dev/null; then
+        sed -i "s/^TGPROXY_SECRET=.*/TGPROXY_SECRET=$new_secret/" "$CONFIG_FILE"
+    else
+        echo "TGPROXY_SECRET=$new_secret" >> "$CONFIG_FILE"
+    fi
 
     print_ok "Secret generated: $new_secret"
     # Ensure it's available for the current script run
@@ -89,14 +99,64 @@ EOF
   print_ok "Service $SERVICE_NAME started successfully."
 }
 
-setup_tgproxy() {
+install_docker() {
+  if ! command -v docker &> /dev/null; then
+    print_info "Docker is not installed. Installing Docker..."
+    curl -fsSL https://get.docker.com | sh
+    systemctl enable --now docker
+    print_ok "Docker installed successfully."
+  else
+    print_info "Docker is already installed."
+  fi
+}
+
+setup_docker_container() {
+  print_info "Setting up MTProto proxy via Docker..."
+
+  # Stop existing container if any
+  if docker ps -a --format '{{.Names}}' | grep -q "^tgproxy$"; then
+    print_info "Removing existing tgproxy container..."
+    docker rm -f tgproxy >/dev/null
+  fi
+
+  docker run -d \
+    --name tgproxy \
+    --restart unless-stopped \
+    -p "${TGPROXY_PORT:-443}:${TGPROXY_PORT:-443}" \
+    ghcr.io/9seconds/mtg:latest \
+    simple-run 0.0.0.0:${TGPROXY_PORT:-443} ${TGPROXY_SECRET}
+
+  print_ok "Docker container 'tgproxy' started successfully."
+}
+
+setup_tgproxy_systemd() {
   require_root
   ensure_deps
   load_env
 
   download_mtg
-  configure_secret
+  configure_secret "systemd"
   setup_systemd
 
-  print_ok "Setup complete."
+  echo "TGPROXY_MODE=systemd" >> "$CONFIG_FILE"
+  print_ok "Systemd Setup complete."
+}
+
+setup_tgproxy_docker() {
+  require_root
+  ensure_deps
+  load_env
+
+  install_docker
+  configure_secret "docker"
+  setup_docker_container
+
+  # Also save the mode
+  if ! grep -q "TGPROXY_MODE=" "$CONFIG_FILE"; then
+    echo "TGPROXY_MODE=docker" >> "$CONFIG_FILE"
+  else
+     sed -i "s/^TGPROXY_MODE=.*/TGPROXY_MODE=docker/" "$CONFIG_FILE"
+  fi
+
+  print_ok "Docker Setup complete."
 }

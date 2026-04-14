@@ -14,6 +14,9 @@ case "$COMMAND" in
   install)
     action_install
     ;;
+  install-docker)
+    action_install_docker
+    ;;
   link)
     action_link
     ;;
